@@ -1,0 +1,53 @@
+{
+  "bands": [
+    {
+      "id": "trivial",
+      "label": "Banalny",
+      "min": 0,
+      "max": 6,
+      "color": "#8d9b92"
+    },
+    {
+      "id": "easy",
+      "label": "Łatwy",
+      "min": 7,
+      "max": 9,
+      "color": "#76b48c"
+    },
+    {
+      "id": "moderate",
+      "label": "Umiarkowany",
+      "min": 10,
+      "max": 12,
+      "color": "#b5ad72"
+    },
+    {
+      "id": "challenging",
+      "label": "Wymagający",
+      "min": 13,
+      "max": 15,
+      "color": "#cf965c"
+    },
+    {
+      "id": "hard",
+      "label": "Trudny",
+      "min": 16,
+      "max": 18,
+      "color": "#cf6e65"
+    },
+    {
+      "id": "extreme",
+      "label": "Ekstremalny",
+      "min": 19,
+      "max": 99,
+      "color": "#a676aa"
+    }
+  ],
+  "rules": [
+    "Próg DC jest źródłem etykiety i koloru; nie używaj procentów na przyciskach dialogowych.",
+    "Przed świadomym rzutem pokaż nazwę umiejętności, opisową trudność i kolor; wynik 2k6 oraz premie pokaż po rzucie.",
+    "Kolor nie może być jedynym nośnikiem informacji. Widoczny tekst i ikona sukcesu/porażki.",
+    "Sukces lub porażka testu nie może zatrzymać sceny.",
+    "Zachowaj rzut w stanie zapisu, nie pozwalaj ponawiać czerwonego bez nowej gry."
+  ]
+}
