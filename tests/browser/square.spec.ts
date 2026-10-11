@@ -1,3 +1,4 @@
+import { startNewGame } from './helpers';
 import { test, expect } from '@playwright/test';
 // Inspect the running scene while all player actions use real canvas clicks.
 // Import the exact bootstrap URL: Vite may append an HMR timestamp; a bare URL would start a second game.
@@ -28,7 +29,7 @@ for(const viewport of [{width:1280,height:720},{width:390,height:844}]) {
   test(`movement, Piotr and visible dice at ${viewport.width}px`,async({page})=>{
     await page.setViewportSize(viewport);
     const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
-    await page.goto('/');await expect(page.locator('canvas')).toBeVisible();
+    await startNewGame(page);await expect(page.locator('canvas')).toBeVisible();
     await expect.poll(async()=>(await state(page)).x).toBe(470);
     const box=(await page.locator('canvas').boundingBox())!;
     expect(box.width/box.height).toBeCloseTo(960/540,2);
@@ -68,7 +69,7 @@ for(const viewport of [{width:1280,height:720},{width:390,height:844}]) {
 
 // A fresh session can succeed; the visible total must match the two dice and bonus.
 test('successful visible roll and dialogue without a check',async({page})=>{
-  await page.goto('/');await expect.poll(async()=>(await state(page)).x).toBe(470);
+  await startNewGame(page);await expect.poll(async()=>(await state(page)).x).toBe(470);
   await click(page,690,300);await expect.poll(async()=>(await state(page)).text,{timeout:20000}).toContain('Piotr Bieniasz');
   await click(page,180,400);await expect.poll(async()=>(await state(page)).text).toContain('szansa 27.8%');
   await nextDice(page,0.999);

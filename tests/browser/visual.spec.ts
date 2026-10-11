@@ -1,3 +1,4 @@
+import { startNewGame } from './helpers';
 import { test, expect, type Page } from '@playwright/test';
 
 async function point(page: Page, x: number, y: number) {
@@ -21,7 +22,7 @@ async function visualState(page: Page) {
   });
 }
 test('pixel art hover, walking frames, cancel approach and touch-friendly card', async ({ page }) => {
-  await page.goto('/');
+  await startNewGame(page);
   await expect.poll(async () => (await visualState(page))?.x).toBe(470);
   await frame(page);
   await page.screenshot({ path: 'test-results/pixel-art-square.png' });

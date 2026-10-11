@@ -11,14 +11,16 @@ Folk-horror detektywistyczny, izometryczne 2D pixel art, single-player w przegl�
 - Horror budowany stopniowo; nadnaturalność nie jest wyjaśniana na starcie.
 
 ## Postać
+Gracz rozdziela 12 punktów w kreatorze. Kolumna Start przedstawia opcjonalny profil Psycholog; rangi umiejętności pozostają stałe na początku gry.
+
 | Atrybut | Start | Umiejętność (ranga początkowa) |
 |---|---:|---|
 | Intelekt | 4 | Analiza 1, Dedukcja 2, Wiedza 2 |
 | Psychika | 3 | Empatia 2, Perswazja 1, Opanowanie 1 |
 | Percepcja | 3 | Spostrzegawczość 1, Intuicja 0, Nasłuchiwanie 0 |
-| Instynkt | 1 | Przetrwanie 0, Refleks 1, Folklor 0 |
+| Instynkt | 2 | Przetrwanie 0, Refleks 1, Folklor 0 |
 
-Atrybuty 1–5, rangi umiejętności 0–5. Premia = atrybut + ranga + modyfikatory.
+Atrybuty 1–6 (łącznie 12), rangi umiejętności 0–5. Premia = atrybut + ranga + modyfikatory.
 
 ## Testy
 2k6 + premia >= próg. DC: 7 banalny, 10 łatwy, 13 umiarkowany, 16 trudny, 19 bardzo trudny, 22 niemal niemożliwy. Sukces wyjątkowy: wynik >= DC + 5. Brak automatycznego sukcesu/porażki. Wynik i szansa są jawne. Białe testy ponawiane wyłącznie po zmianie warunków, czerwone jednorazowe. Pasywne rzuty uruchamiają się automatycznie, ale są wyświetlane. Nie blokuj fabuły testami opcjonalnymi.

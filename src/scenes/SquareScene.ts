@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
-import { character, bonus, chance, roll } from '../rpg';
-import { dialogues } from '../dialogues';
+import { bonus } from '../rpg';
+import { GameSession } from '../state/session';
+import { presets } from '../state/character';
+import { SettingsStore } from '../state/settings';
+import { DialogueController } from '../systems/dialogue';
+import { TextReveal } from '../systems/textReveal';
 import { findPath, type Point } from '../navigation';
 import { square } from '../data/square';
 import { createSquareTextures, pixelSprite } from '../art/pixelArt';
@@ -13,7 +17,10 @@ export class SquareScene extends Phaser.Scene {
   private playerSprite!: Phaser.GameObjects.Image;
   private path: Point[] = [];
   private talkPending = false;
-  private checkResults = new Map<string, string>();
+  private session!: GameSession;
+  private settings!: SettingsStore;
+  private dialogueController!: DialogueController;
+  private reveal?: TextReveal;
   private dialog?: Phaser.GameObjects.Container;
   private note!: Phaser.GameObjects.Text;
   private destination!: Phaser.GameObjects.Graphics;
@@ -22,6 +29,22 @@ export class SquareScene extends Phaser.Scene {
   private piotrSprite!: Phaser.GameObjects.Image;
 
   constructor() { super('Square'); }
+
+  init(data: { session?: GameSession; settings?: SettingsStore } = {}) {
+    this.session = data.session ?? new GameSession(presets.Psycholog);
+    this.settings = data.settings ?? new SettingsStore();
+    this.dialogueController = new DialogueController(this.session);
+    this.path = structuredClone(this.session.state.movement.path);
+    this.talkPending = this.session.state.movement.talkPending;
+    this.dialog = undefined;
+  }
+
+  applySettings() { this.reveal?.setSpeed(this.settings.value.dialogueSpeed); }
+
+  snapshot() {
+    this.session.update({ dialogue: this.session.state.dialogue ? { ...this.session.state.dialogue, revealed: this.reveal?.visibleCount ?? this.session.state.dialogue.revealed } : null, position: { x: this.player.x, y: this.player.y }, movement: { path: this.path, talkPending: this.talkPending, flipX: this.playerSprite.flipX } });
+    return this.session.snapshot();
+  }
 
   create() {
     createSquareTextures(this);
@@ -39,8 +62,9 @@ export class SquareScene extends Phaser.Scene {
       { x: 0, y: -7 }, { x: 13, y: 0 }, { x: 0, y: 7 }, { x: -13, y: 0 }
     ], true);
     this.playerSprite = this.add.image(0, 0, 'jerzy-0').setOrigin(0.5, 1).setScale(2);
-    this.player = this.add.container(square.player.x, square.player.y, [this.playerSprite]).setDepth(square.player.y).setName('jerzy');
+    this.player = this.add.container(this.session.state.position.x, this.session.state.position.y, [this.playerSprite]).setDepth(square.player.y).setName('jerzy');
     this.player.setData('moving', false);
+    this.playerSprite.setFlipX(this.session.state.movement.flipX);
 
     this.hoverRing = this.add.ellipse(0, -3, 58, 22, 0xe2c489, 0.13).setStrokeStyle(2, 0xe2c489, 0.75);
     this.piotrSprite = this.add.image(0, 0, 'piotr-0').setOrigin(0.5, 1).setScale(2);
@@ -72,6 +96,11 @@ export class SquareScene extends Phaser.Scene {
       } else this.note.setText('Nie można tam wejść. Wybierz wolny fragment placu.');
     });
     this.input.keyboard?.on('keydown-K', () => this.toggleCharacter());
+    this.events.once('shutdown', () => { this.reveal?.destroy(); this.reveal = undefined; });
+    if (this.path.length) this.setDestination(this.path[this.path.length - 1]);
+    if (this.session.state.dialogue) this.showCurrentDialogue();
+    else if (this.session.state.cardOpen) this.toggleCharacter();
+    this.game.events.emit('square-ready', this);
   }
 
   private createHud() {
@@ -118,18 +147,21 @@ export class SquareScene extends Phaser.Scene {
     this.player.setDepth(this.player.y);
     if (!this.path.length) this.destination.setVisible(false);
     if (!this.dialog && this.talkPending && !this.path.length) {
-      this.talkPending = false; this.setPiotrHover(false); this.showDialogue('intro');
+      this.talkPending = false; this.setPiotrHover(false); this.dialogueController.start(); this.showCurrentDialogue();
     }
+    if (moving) this.snapshot();
   }
 
-  private closeOverlay() { this.dialog?.destroy(); this.dialog = undefined; }
+  private closeOverlay() { this.reveal?.destroy(); this.reveal = undefined; this.dialog?.destroy(); this.dialog = undefined; }
 
   private toggleCharacter() {
-    if (this.dialog) { this.closeOverlay(); return; }
+    if (this.dialog) { this.closeOverlay(); this.session.update({ dialogue: null, cardOpen: false }); return; }
+    const character = this.session.state.character;
     const text = ['JERZY DROZD', ...Object.entries(character.attributes).map(([k, v]) => `${k}: ${v}`), '',
-      ...Object.entries(character.skills).map(([k, v]) => `${k}: ${v} (premia ${bonus(k as keyof typeof character.skills)})`)].join('\n');
+      ...Object.entries(character.skills).map(([k, v]) => `${k}: ${v} (premia ${bonus(k as keyof typeof character.skills, 0, character)})`)].join('\n');
     this.path = []; this.talkPending = false; this.destination.setVisible(false);
-    this.openOverlay(text, [{ label: 'Zamknij', next: '' }], () => this.closeOverlay());
+    this.session.update({ cardOpen: true, dialogue: null });
+    this.openOverlay(text, [{ label: 'Zamknij', next: '' }], () => { this.closeOverlay(); this.session.update({ cardOpen: false }); });
   }
 
   private openOverlay(text: string, choices: { label: string; next: string }[], onChoice: (i: number) => void) {
@@ -140,6 +172,7 @@ export class SquareScene extends Phaser.Scene {
       fontFamily: 'Georgia', fontSize: card ? '16px' : '18px', color: '#efe5d4', wordWrap: { width: 780 }, lineSpacing: card ? 1 : 5
     });
     this.dialog = this.add.container(0, 0, [shade, bg, content]).setDepth(1000);
+    if (!card) { this.reveal = new TextReveal(this, content); this.reveal.show(text, this.settings.value.dialogueSpeed, this.session.state.dialogue?.revealed ?? 0); shade.on('pointerdown', () => this.reveal?.finish()); }
     choices.forEach((choice, i) => {
       const t = this.add.text(94, (card ? 480 : 388) + i * 39, `${i + 1}. ${choice.label}`, {
         fontFamily: 'Georgia', fontSize: '17px', color: '#e0d0a0', wordWrap: { width: 755 }, padding: { x: 4, y: 0 }
@@ -150,23 +183,13 @@ export class SquareScene extends Phaser.Scene {
     });
   }
 
-  private showDialogue(id: string, result?: string) {
+  private showCurrentDialogue() {
     this.closeOverlay();
-    const node = dialogues[id];
-    const choices = node.choices.length ? node.choices.map((c, i) => ({ ...c, label: c.label + (c.skill && c.dc ?
-      (this.checkResults.has(`${id}:${i}`) ? ' — wynik zapisany' : ` — szansa ${chance(c.skill, c.dc)}%`) : '') })) : [{ label: 'Zakończ rozmowę', next: '' }];
-    this.openOverlay(`${node.speaker} (dialog adaptacyjny)\n\n${node.text}${result ? '\n\n' + result : ''}`, choices, i => {
-      const choice = node.choices[i];
-      if (!choice) { this.closeOverlay(); this.note.setText('Rozmowa zakończona. Możesz dalej zwiedzać plac. [K] karta postaci.'); return; }
-      let info = '';
-      if (choice.skill && choice.dc) {
-        const key = `${id}:${i}`, previous = this.checkResults.get(key);
-        if (previous) { this.showDialogue(choice.next, previous); return; }
-        const r = roll(choice.skill, choice.dc);
-        info = `TEST ${choice.skill} (${chance(choice.skill, choice.dc)}%): [${r.dice.join(' + ')}] + ${bonus(choice.skill)} = ${r.total} / ${choice.dc} — ${r.exceptional ? 'SUKCES WYJĄTKOWY' : r.success ? 'SUKCES' : 'PORAŻKA'}`;
-        this.checkResults.set(key, info);
-      }
-      this.showDialogue(choice.next, info);
+    const view = this.dialogueController.view();
+    this.openOverlay(view.text, view.choices, index => {
+      this.dialogueController.choose(index);
+      if (this.session.state.dialogue) this.showCurrentDialogue();
+      else { this.closeOverlay(); this.note.setText('Rozmowa zakończona. Możesz dalej zwiedzać plac. [K] karta postaci.'); }
     });
   }
 }
