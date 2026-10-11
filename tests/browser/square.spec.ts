@@ -8,7 +8,21 @@ async function state(page:any) {
     return {x:scene.player.x,y:scene.player.y,dialog:!!scene.dialog,text:scene.dialog?.list.filter((o:any)=>o.type==='Text').map((o:any)=>o.text).join('\n')||''};
   });
 }
-async function click(page:any,x:number,y:number){const box=await page.locator('canvas').boundingBox();await page.mouse.click(box.x+x*box.width/960,box.y+y*box.height/540);await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));}
+async function frameReady(page:any){
+  await page.evaluate(async()=>{const {game}=await import('/src/main.ts');await new Promise<void>(resolve=>game.events.once('poststep',()=>game.events.once('poststep',()=>resolve())));});
+}
+async function click(page:any,x:number,y:number){
+  // Scene text appears before Phaser registers its interactive hit areas on the next frame.
+  await frameReady(page);
+  const box=await page.locator('canvas').boundingBox();
+  await page.mouse.click(box.x+x*box.width/960,box.y+y*box.height/540);
+  await frameReady(page);
+}
+async function nextDice(page:any,value:number){
+  // Phaser also uses Math.random for text texture UUIDs: mock only the two dice.
+  await page.evaluate((value:number)=>{const original=Math.random;let remaining=2;Math.random=()=>{if(remaining-->0)return value;Math.random=original;return original();};},value);
+}
+
 for(const viewport of [{width:1280,height:720},{width:390,height:844}]) {
   test(`movement, Piotr and visible dice at ${viewport.width}px`,async({page})=>{
     await page.setViewportSize(viewport);
@@ -35,13 +49,33 @@ for(const viewport of [{width:1280,height:720},{width:390,height:844}]) {
     await click(page,690,300);expect((await state(page)).dialog).toBe(false);
     await expect.poll(async()=>(await state(page)).text,{timeout:20000}).toContain('Piotr Bieniasz');
     await click(page,180,400);await expect.poll(async()=>(await state(page)).text).toContain('szansa 27.8%');
-    await page.evaluate(()=>{const original=Math.random;let dice=2;Math.random=()=>{if(dice-->0)return 0;Math.random=original;return original();};});
+    await nextDice(page,0);
     await click(page,180,400);await expect.poll(async()=>(await state(page)).text).toContain('[1 + 1] + 4 = 6 / 13 — PORAŻKA');
     await click(page,180,400);await expect.poll(async()=>(await state(page)).dialog).toBe(false);
     await click(page,500,400);await expect.poll(async()=>Math.abs((await state(page)).x-500),{timeout:20000}).toBeLessThan(3);
+    await click(page,690,300);await expect.poll(async()=>(await state(page)).text,{timeout:20000}).toContain('Piotr Bieniasz');
+    await click(page,180,400);await expect.poll(async()=>(await state(page)).text).toContain('wynik zapisany');
+    await nextDice(page,0.999);
+    await click(page,180,400);await expect.poll(async()=>(await state(page)).text).toContain('[1 + 1] + 4 = 6 / 13 — PORAŻKA');
+    await click(page,180,400);await expect.poll(async()=>(await state(page)).dialog).toBe(false);
     await page.keyboard.press('k');await expect.poll(async()=>(await state(page)).text).toContain('Folklor: 0');
     await click(page,150,490);await expect.poll(async()=>(await state(page)).dialog).toBe(false);
     await page.screenshot({path:`test-results/square-${viewport.width}.png`});
     expect(errors).toEqual([]);
   });
 }
+
+// A fresh session can succeed; the visible total must match the two dice and bonus.
+test('successful visible roll and dialogue without a check',async({page})=>{
+  await page.goto('/');await expect.poll(async()=>(await state(page)).x).toBe(470);
+  await click(page,690,300);await expect.poll(async()=>(await state(page)).text,{timeout:20000}).toContain('Piotr Bieniasz');
+  await click(page,180,400);await expect.poll(async()=>(await state(page)).text).toContain('szansa 27.8%');
+  await nextDice(page,0.999);
+  await click(page,180,400);await expect.poll(async()=>(await state(page)).text).toContain('[6 + 6] + 4 = 16 / 13 — SUKCES');
+  await click(page,180,400);await expect.poll(async()=>(await state(page)).dialog).toBe(false);
+  await click(page,690,300);await expect.poll(async()=>(await state(page)).text).toContain('Piotr Bieniasz');
+  await click(page,180,400);await expect.poll(async()=>(await state(page)).text).toContain('wynik zapisany');
+  await click(page,180,440);await expect.poll(async()=>(await state(page)).text).toContain('Muszę zdobyć zakwaterowanie');
+  expect((await state(page)).text).not.toContain('TEST');
+  await click(page,180,400);await expect.poll(async()=>(await state(page)).dialog).toBe(false);
+});

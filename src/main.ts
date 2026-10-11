@@ -6,6 +6,7 @@ class SquareScene extends Phaser.Scene{
  private player!:Phaser.GameObjects.Container;
  private path:Point[]=[];
  private talkPending=false;
+ private checkResults=new Map<string,string>();
  private dialog?:Phaser.GameObjects.Container;
  private note!:Phaser.GameObjects.Text;
 
@@ -43,9 +44,9 @@ class SquareScene extends Phaser.Scene{
   choices.forEach((c,i)=>{const t=this.add.text(94,(card?480:388)+i*39,(i+1)+'. '+c.label,{fontFamily:'Georgia',fontSize:'17px',color:'#d0dcae',wordWrap:{width:755}}).setInteractive({useHandCursor:true});t.on('pointerdown',()=>onChoice(i));container.add(t)});
  }
  private showDialogue(id:string,result?:string){
-  this.dialog?.destroy();const n=dialogues[id];this.openOverlay(n.speaker+' (dialog adaptacyjny)\n\n'+n.text+(result?'\n\n'+result:''),n.choices.length?n.choices.map(c=>({...c,label:c.label+(c.skill&&c.dc?' — szansa '+chance(c.skill,c.dc)+'%':'' )})):[{label:'Zakończ rozmowę',next:''}],i=>{
+  this.dialog?.destroy();const n=dialogues[id];this.openOverlay(n.speaker+' (dialog adaptacyjny)\n\n'+n.text+(result?'\n\n'+result:''),n.choices.length?n.choices.map((c,i)=>({...c,label:c.label+(c.skill&&c.dc?(this.checkResults.has(id+':'+i)?' — wynik zapisany':' — szansa '+chance(c.skill,c.dc)+'%'):'' )})):[{label:'Zakończ rozmowę',next:''}],i=>{
    const c=n.choices[i];if(!c){this.dialog?.destroy();this.dialog=undefined;this.note.setText('Rozmowa zakończona. Możesz dalej zwiedzać plac. [K] karta postaci.');return;}
-   let info='';if(c.skill&&c.dc){const r=roll(c.skill,c.dc);info='TEST '+c.skill+' ('+chance(c.skill,c.dc)+'%): ['+r.dice.join(' + ')+'] + '+bonus(c.skill)+' = '+r.total+' / '+c.dc+' — '+(r.exceptional?'SUKCES WYJĄTKOWY':r.success?'SUKCES':'PORAŻKA');}
+   let info='';if(c.skill&&c.dc){const key=id+':'+i;const previous=this.checkResults.get(key);if(previous){this.showDialogue(c.next,previous);return;}const r=roll(c.skill,c.dc);info='TEST '+c.skill+' ('+chance(c.skill,c.dc)+'%): ['+r.dice.join(' + ')+'] + '+bonus(c.skill)+' = '+r.total+' / '+c.dc+' — '+(r.exceptional?'SUKCES WYJĄTKOWY':r.success?'SUKCES':'PORAŻKA');this.checkResults.set(key,info);}
    this.showDialogue(c.next,info);
   });
  }
