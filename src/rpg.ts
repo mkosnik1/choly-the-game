@@ -6,6 +6,6 @@ export const character = {
 export type Attribute = keyof typeof character.attributes;
 export type Skill = keyof typeof character.skills;
 export const skillAttribute: Record<Skill,Attribute> = {Analiza:'Intelekt',Dedukcja:'Intelekt',Wiedza:'Intelekt',Empatia:'Psychika',Perswazja:'Psychika',Opanowanie:'Psychika',Spostrzegawczość:'Percepcja',Intuicja:'Percepcja',Nasłuchiwanie:'Percepcja',Przetrwanie:'Instynkt',Refleks:'Instynkt',Folklor:'Instynkt'};
-export function bonus(skill:Skill):number { return character.attributes[skillAttribute[skill]] + character.skills[skill]; }
-export function chance(skill:Skill, dc:number):number { let success=0; for(let a=1;a<=6;a++) for(let b=1;b<=6;b++) if(a+b+bonus(skill)>=dc) success++;return Math.round(success/36*1000)/10; }
-export function roll(skill:Skill,dc:number, random:()=>number=Math.random) {const dice:[number,number]=[Math.floor(random()*6)+1,Math.floor(random()*6)+1];const total=dice[0]+dice[1]+bonus(skill);return {dice,total,dc,success:total>=dc,exceptional:total>=dc+5,skill};}
+export function bonus(skill:Skill, modifiers=0):number { return character.attributes[skillAttribute[skill]] + character.skills[skill] + modifiers; }
+export function chance(skill:Skill, dc:number, modifiers=0):number { let success=0; for(let a=1;a<=6;a++) for(let b=1;b<=6;b++) if(a+b+bonus(skill, modifiers)>=dc) success++;return Math.round(success/36*1000)/10; }
+export function roll(skill:Skill,dc:number, random:()=>number=Math.random, modifiers=0) {const dice:[number,number]=[Math.floor(random()*6)+1,Math.floor(random()*6)+1];const total=dice[0]+dice[1]+bonus(skill, modifiers);return {dice,total,dc,success:total>=dc,exceptional:total>=dc+5,skill};}
