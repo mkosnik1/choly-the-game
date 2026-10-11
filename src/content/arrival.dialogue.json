@@ -1,0 +1,316 @@
+{
+  "id": "arrival_and_first_meeting",
+  "version": 1,
+  "language": "pl",
+  "attribution": "Oryginalne dialogi adaptacyjne; nie są cytatami z powieści.",
+  "start": "intro",
+  "nodes": {
+    "intro": {
+      "speaker": "Andrzej",
+      "text": "To jak, panie doktorze? Na długo pan do nas zawitał?",
+      "choices": [
+        {
+          "text": "Jadę przeprowadzić badania. Nie znam jeszcze terminu powrotu.",
+          "next": "warsaw"
+        },
+        {
+          "text": "Wolałbym najpierw dojechać. Ta droga daje się we znaki.",
+          "next": "warsaw",
+          "tone": "distant"
+        },
+        {
+          "text": "Zależy, jak pójdzie mi praca.",
+          "next": "warsaw",
+          "tone": "neutral"
+        }
+      ],
+      "stage": "Kabina Żuka. Andrzej pali papierosa; samochód podskakuje na wybojach."
+    },
+    "warsaw": {
+      "speaker": "Andrzej",
+      "text": "Bo pan chyba nie z naszego ośrodka? Widziałem pana przy drodze z walizką. Nie sposób było nie zabrać.",
+      "choices": [
+        {
+          "text": "Jestem z Warszawy. Zajmuję się badaniami społecznymi.",
+          "next": "inspection"
+        },
+        {
+          "text": "Nie jestem lekarzem z ośrodka. Przyjechałem służbowo ze stolicy.",
+          "next": "inspection"
+        }
+      ]
+    },
+    "inspection": {
+      "speaker": "Andrzej",
+      "text": "Ze stolicy? A to jakaś inspekcja, czy coś z gospodarstwem się dzieje?",
+      "choices": [
+        {
+          "text": "Chodzi o incydent w Chołach. Ten, o którym pisały gazety.",
+          "next": "confidential"
+        },
+        {
+          "text": "Nie przyjechałem oglądać bydła. Interesują mnie ludzie i tamta sprawa.",
+          "next": "confidential"
+        }
+      ]
+    },
+    "confidential": {
+      "speaker": "Andrzej",
+      "text": "Aaa. No to powiem panu, że ja wiem trochę więcej, niż pisali.",
+      "choices": [
+        {
+          "text": "«Więcej»? Proszę mówić.",
+          "next": "secret"
+        },
+        {
+          "text": "[EMPATIA] Oceń, czy kierowca jest gotów mówić.",
+          "next": "secret",
+          "check": {
+            "skill": "Empatia",
+            "dc": 10,
+            "kind": "white",
+            "id": "andrzej_empathy",
+            "successText": "Andrzej jest podekscytowany własną rolą w sprawie. Bardziej szuka zaufanego słuchacza, niż próbuje cię zwodzić.",
+            "failureText": "Przy dymie papierosowym i huku silnika trudno odczytać jego zachowanie."
+          }
+        }
+      ]
+    },
+    "secret": {
+      "speaker": "Andrzej",
+      "text": "Tylko niech to między nami zostanie. To ja zgłosiłem sprawę milicji. A później powiedziałem gazecie.",
+      "choices": [
+        {
+          "text": "Dlaczego akurat pan? Był pan świadkiem?",
+          "next": "informant"
+        },
+        {
+          "text": "Rozumiem. Od kogo pan się dowiedział?",
+          "next": "informant"
+        },
+        {
+          "text": "To wyjaśnia, skąd sprawa trafiła do prasy.",
+          "next": "informant"
+        }
+      ],
+      "onEnterFlags": [
+        "andrzej_reported"
+      ]
+    },
+    "informant": {
+      "speaker": "Andrzej",
+      "text": "Był tam Romek. Roman, z tej wsi. Jak przyjeżdżałem z dostawą, zawsze chciał papierosa. Kiedyś w zamian opowiedział, co się stało przy piecu.",
+      "choices": [
+        {
+          "text": "[DEDUKCJA] Zestaw to ze znaną wersją z gazety.",
+          "next": "newspaper",
+          "check": {
+            "skill": "Dedukcja",
+            "dc": 11,
+            "kind": "white",
+            "id": "roman_newspaper",
+            "successText": "W relacji prasowej brakowało świadków. Skąd zatem Roman wiedział aż tyle? To nie pasuje.",
+            "failureText": "Zatrzymujesz informację o Romanie, ale jeszcze nie wyciągasz dodatkowego wniosku."
+          }
+        },
+        {
+          "text": "Co dokładnie zdradził Roman?",
+          "next": "newspaper"
+        }
+      ],
+      "onEnterFlags": [
+        "roman_named_as_source"
+      ]
+    },
+    "newspaper": {
+      "speaker": "Jerzy, myśli",
+      "text": "Gazety podawały, że kobieta była sama. A kierowca opowiada o człowieku, który znał przebieg wydarzeń.",
+      "choices": [
+        {
+          "text": "Zapytaj Andrzeja, jak Roman mógł wiedzieć.",
+          "next": "witnesses"
+        },
+        {
+          "text": "Pozwól kierowcy dokończyć.",
+          "next": "witnesses"
+        }
+      ]
+    },
+    "witnesses": {
+      "speaker": "Andrzej",
+      "text": "Bo oni tam byli. Mówił, że ludzie wszystko widzieli. Tylko nikt nie chce się wychylać.",
+      "choices": [
+        {
+          "text": "Czy Andrzej zna nazwiska tych ludzi?",
+          "next": "witness_names"
+        },
+        {
+          "text": "Nie naciskaj. Zapisz informację na później.",
+          "next": "drive_end"
+        }
+      ],
+      "onEnterFlags": [
+        "witness_discrepancy_known"
+      ],
+      "journal": [
+        "Andrzej twierdzi, że Roman mówił o obecności świadków przy incydencie z piecem. Prasa opisywała sprawę inaczej."
+      ]
+    },
+    "witness_names": {
+      "speaker": "Andrzej",
+      "text": "Nie, panie doktorze. Ja imion nie spisywałem. Mówię tylko, co usłyszałem od Romka.",
+      "choices": [
+        {
+          "text": "Zapisz relację w pamięci i zamilknij.",
+          "next": "drive_end"
+        }
+      ]
+    },
+    "drive_end": {
+      "speaker": "Jerzy, myśli",
+      "text": "Na jedną podróż wystarczy. Mam źródło informacji i sprzeczność do sprawdzenia. Na razie nie mam żadnego dowodu.",
+      "choices": [
+        {
+          "text": "Obserwuj drogę i wjazd do wsi.",
+          "next": "village_enter"
+        }
+      ],
+      "stage": "Krótki montaż przejazdu. Zbliżenie na dwa słupki i pustą doniczkę zamiast tablicy miejscowości."
+    },
+    "village_enter": {
+      "speaker": "Andrzej",
+      "text": "O, tam stoi Piotr Bieniasz. Nasz sołtys. Z nim trzeba zacząć.",
+      "choices": [
+        {
+          "text": "Wysiądź z Żuka i odbierz walizkę.",
+          "next": "explore"
+        }
+      ],
+      "stage": "Żuk zatrzymuje się przed sklepem «Słodycze Wina». Mieszkańcy witają Andrzeja; Piotr obserwuje przyjezdnego.",
+      "onEnterFlags": [
+        "arrived_in_choly"
+      ]
+    },
+    "explore": {
+      "speaker": "SYSTEM",
+      "text": "Możesz teraz swobodnie obejrzeć plac. Podejdź do Piotra Bieniasza, kiedy będziesz gotowy.",
+      "choices": [],
+      "mode": "exploration",
+      "exitInteraction": "piotr_bieniasz",
+      "next": "piotr_intro"
+    },
+    "piotr_intro": {
+      "speaker": "Piotr Bieniasz",
+      "text": "Inspekcję zwierząt mieliśmy niedawno. Mam rozumieć, że znowu przyjechał ktoś na kontrolę?",
+      "choices": [
+        {
+          "text": "Doktor Jerzy Drozd. Jestem z Państwowego Instytutu Badań Społecznych.",
+          "next": "piotr_docs"
+        },
+        {
+          "text": "Nie chodzi o kontrolę trzody. Przyjechałem prowadzić badania.",
+          "next": "piotr_docs"
+        }
+      ]
+    },
+    "piotr_docs": {
+      "speaker": "Piotr Bieniasz",
+      "text": "Państwowy Instytut Badań Społecznych… Doktor psychologii. Czyli nie lekarz.",
+      "choices": [
+        {
+          "text": "[OPANOWANIE] Odpowiedz spokojnie.",
+          "next": "piotr_calm_result",
+          "check": {
+            "skill": "Opanowanie",
+            "dc": 9,
+            "kind": "red",
+            "id": "piotr_doctor_jab",
+            "successText": "Nie dajesz po sobie poznać, że uwaga cię dotknęła.",
+            "failureText": "Zbyt ostro podkreślasz swój tytuł. Sołtys pozostaje niewzruszony."
+          }
+        },
+        {
+          "text": "Zgadza się. Pismo upoważnia mnie do badań i mówi o zakwaterowaniu.",
+          "next": "piotr_request"
+        },
+        {
+          "text": "Nie zajmuję się leczeniem. Pozwoli pan, że przejdę do celu przyjazdu.",
+          "next": "piotr_request"
+        }
+      ],
+      "onEnterFlags": [
+        "research_documents_shown"
+      ]
+    },
+    "piotr_calm_result": {
+      "speaker": "Jerzy, myśli",
+      "text": "Nie muszę przekonywać sołtysa, że doktorat jest doktoratem. Ważniejsze, żeby przeczytał zaświadczenie.",
+      "choices": [
+        {
+          "text": "Poproś o wskazanie noclegu.",
+          "next": "piotr_request"
+        }
+      ]
+    },
+    "piotr_request": {
+      "speaker": "Piotr Bieniasz",
+      "text": "Widzę dokument. No dobrze, tylko niech pan pamięta, że mamy tutaj własne sprawy.",
+      "choices": [
+        {
+          "text": "Potrzebuję miejsca na walizkę i możliwości rozpoczęcia pracy.",
+          "next": "piotr_depart"
+        },
+        {
+          "text": "[PERSWAZJA] Wyjaśnij, że szybkie zakwaterowanie skróci wizytę.",
+          "next": "piotr_depart",
+          "check": {
+            "skill": "Perswazja",
+            "dc": 10,
+            "kind": "white",
+            "id": "piotr_lodging",
+            "successText": "Piotr przyznaje, że lepiej szybko znaleźć ci miejsce, niż tracić czas na placu.",
+            "failureText": "Sołtys nie wykazuje entuzjazmu, ale obowiązek wynikający z pisma pozostaje aktualny."
+          }
+        }
+      ]
+    },
+    "piotr_depart": {
+      "speaker": "Jerzy, myśli",
+      "text": "Bieniasz przytakuje z wyraźnym ociąganiem. Zanim odejdziemy, rozmawia jeszcze chwilę z Andrzejem.",
+      "choices": [
+        {
+          "text": "Rusz za sołtysem.",
+          "next": "chestnut"
+        }
+      ],
+      "onEnterFlags": [
+        "piotr_first_meeting_completed"
+      ]
+    },
+    "chestnut": {
+      "speaker": "Jerzy, myśli",
+      "text": "Kasztanowiec trzeszczy pod podmuchem wiatru. Kilka kasztanów uderza o kamienie. Jeden zatrzymuje się pod butem.",
+      "choices": [
+        {
+          "text": "Podnieś kasztan. Na szczęście.",
+          "next": "scene_end"
+        }
+      ],
+      "onEnterFlags": [
+        "chestnut_event_started"
+      ]
+    },
+    "scene_end": {
+      "speaker": "SYSTEM",
+      "text": "Piotr rusza w stronę domu. Koniec prologu i pierwszego spotkania z sołtysem.",
+      "choices": [],
+      "onEnterFlags": [
+        "chestnut_collected",
+        "scene_001_complete",
+        "scene_002_intro_complete"
+      ],
+      "nextScene": "scene_003_bieniasz_house",
+      "fallbackScene": "square_free_exploration"
+    }
+  }
+}
