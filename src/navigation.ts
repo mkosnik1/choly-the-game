@@ -1,12 +1,10 @@
+import { square } from './data/square';
 export type Point = { x: number; y: number };
 export type Obstacle = { x: number; y: number; width: number; height: number };
-export const buildings: Obstacle[] = [
-  { x: 60, y: 70, width: 280, height: 110 },
-  { x: 630, y: 60, width: 265, height: 130 }
-];
+export const buildings: Obstacle[] = square.props.filter(p => p.texture === 'shop' || p.texture === 'house').map(p => p.footprint);
 const margin = 18;
 const inside = (p: Point, r: Obstacle) => p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height;
-export const collisionRects = buildings.map(r => ({ x: r.x - margin, y: r.y - margin, width: r.width + margin * 2, height: r.height + margin * 2 }));
+export const collisionRects = square.props.map(p => ({ x: p.footprint.x - margin, y: p.footprint.y - margin, width: p.footprint.width + margin * 2, height: p.footprint.height + margin * 2 }));
 export function canWalk(a: Point, b: Point): boolean {
   return collisionRects.every(r => {
     let lo = 0, hi = 1;
@@ -19,7 +17,7 @@ export function canWalk(a: Point, b: Point): boolean {
   });
 }
 export function findPath(start: Point, requested: Point): Point[] {
-  const end = { x: Math.max(20, Math.min(940, requested.x)), y: Math.max(52, Math.min(478, requested.y)) };
+  const end = { x: Math.max(square.bounds.left, Math.min(square.bounds.right, requested.x)), y: Math.max(square.bounds.top, Math.min(square.bounds.bottom, requested.y)) };
   if (collisionRects.some(r => inside(end, r))) return [];
   const nodes = [start, end, ...collisionRects.flatMap(r => [
     { x: r.x, y: r.y }, { x: r.x + r.width, y: r.y },

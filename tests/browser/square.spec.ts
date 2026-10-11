@@ -1,15 +1,16 @@
 import { test, expect } from '@playwright/test';
 // Inspect the running scene while all player actions use real canvas clicks.
+// Import the exact bootstrap URL: Vite may append an HMR timestamp; a bare URL would start a second game.
 async function state(page:any) {
   return page.evaluate(async()=>{
-    const {game}=await import('/src/main.ts');
+    const {game}=await import(document.querySelector<HTMLScriptElement>('script[src*="/src/main.ts"]')!.src);
     const scene=game.scene.getScene('Square') as any;
     if(!scene?.player)return {x:null,y:null,dialog:false,text:''};
     return {x:scene.player.x,y:scene.player.y,dialog:!!scene.dialog,text:scene.dialog?.list.filter((o:any)=>o.type==='Text').map((o:any)=>o.text).join('\n')||''};
   });
 }
 async function frameReady(page:any){
-  await page.evaluate(async()=>{const {game}=await import('/src/main.ts');await new Promise<void>(resolve=>game.events.once('poststep',()=>game.events.once('poststep',()=>resolve())));});
+  await page.evaluate(async()=>{const {game}=await import(document.querySelector<HTMLScriptElement>('script[src*="/src/main.ts"]')!.src);await new Promise<void>(resolve=>game.events.once('poststep',()=>game.events.once('poststep',()=>resolve())));});
 }
 async function click(page:any,x:number,y:number){
   // Scene text appears before Phaser registers its interactive hit areas on the next frame.
@@ -38,7 +39,7 @@ for(const viewport of [{width:1280,height:720},{width:390,height:844}]) {
     await click(page,400,120);
     // The direct segment crosses the shop; verify every animation frame remains outside it.
     const positions=await page.evaluate(async()=>{
-      const {game}=await import('/src/main.ts');const scene=game.scene.getScene('Square') as any;
+      const {game}=await import(document.querySelector<HTMLScriptElement>('script[src*="/src/main.ts"]')!.src);const scene=game.scene.getScene('Square') as any;
       const points:{x:number;y:number}[]=[];
       await new Promise<void>(resolve=>{const record=()=>{points.push({x:scene.player.x,y:scene.player.y});if(!scene.path.length){scene.events.off('postupdate',record);resolve();}};scene.events.on('postupdate',record);});return points;
     });
