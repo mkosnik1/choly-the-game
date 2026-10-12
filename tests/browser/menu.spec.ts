@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { startNewGame, gameState, canvasClick } from './helpers';
+import { startNewGame, gameState, canvasClick, choose, reachSquare } from './helpers';
 async function screenText(page: any) {
   return page.evaluate(async () => {
     const { game } = await import(document.querySelector<HTMLScriptElement>('script[src*="/src/main.ts"]')!.src);
-    return game.scene.getScene('Square').dialog?.list.find((o: any) => o.type === 'Text')?.text ?? '';
+    return game.scene.getScenes(false).find((s: any) => s.sys.isActive() || s.sys.isPaused()).dialog?.list.find((o: any) => o.type === 'Text')?.text ?? '';
   });
 }
 for (const viewport of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
@@ -37,13 +37,13 @@ test('custom build, three slots, overwrite cancellation, reload and preserved di
   await page.getByRole('button', { name: 'Zmniejsz Percepcja' }).click();
   for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Zwiększ Psychika' }).click();
   await page.getByRole('button', { name: 'Rozpocznij grę', exact: true }).click();
-  await canvasClick(page, 690, 300); await expect.poll(async () => (await gameState(page))?.dialogue?.nodeId, { timeout: 10000 }).toBe('intro');
+  await reachSquare(page); await canvasClick(page, 690, 300); await expect.poll(async () => (await gameState(page))?.dialogue?.nodeId, { timeout: 10000 }).toBe('piotr_intro');
   await canvasClick(page, 180, 400); await expect.poll(() => screenText(page)).toContain('Piotr');
-  // Choice labels include the probability calculated from Psychika 6 + Opanowanie 1.
-  const choices = await page.evaluate(async () => { const { game } = await import(document.querySelector<HTMLScriptElement>('script[src*="/src/main.ts"]')!.src); return game.scene.getScene('Square').dialog.list.filter((o: any) => o.type === 'Text').map((o: any) => o.text).join('\n'); });
-  expect(choices).toContain('szansa 72.2%');
+  // Difficulty is described by DC; the selected Psychika 6 still contributes to the roll bonus.
+  const choices = await page.evaluate(async () => { const { game } = await import(document.querySelector<HTMLScriptElement>('script[src*="/src/main.ts"]')!.src); return game.scene.getScenes(false).find((s: any) => s.sys.isActive() || s.sys.isPaused()).dialog.list.filter((o: any) => o.type === 'Text').map((o: any) => o.text).join('\n'); });
+  expect(choices).toContain('Łatwy');
   await page.evaluate(() => { const original = Math.random; let dice = 2; Math.random = () => { if (dice-- > 0) return 0; Math.random = original; return original(); }; });
-  await canvasClick(page, 180, 400); await expect.poll(() => screenText(page)).toContain('[1 + 1] + 7 = 9 / 13 — PORAŻKA');
+  await canvasClick(page, 180, 400); await expect.poll(() => screenText(page)).toContain('[1 + 1] + 7 = 9 / 9 — ✓ SUKCES');
   await page.keyboard.press('Escape'); await page.getByRole('button', { name: 'Zapisz grę', exact: true }).click();
   await page.getByRole('button', { name: 'Zapisz w slocie 1', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Zapisano grę w slocie 1');
@@ -65,11 +65,9 @@ test('custom build, three slots, overwrite cancellation, reload and preserved di
   expect(await page.evaluate(() => [1, 2, 3].map(n => localStorage.getItem(`choly.save.${n}`)))).toEqual(allSlots);
   await page.reload(); await page.getByRole('button', { name: 'Kontynuuj', exact: true }).click();
   await expect.poll(() => gameState(page)).toEqual(saved);
-  await expect.poll(() => screenText(page)).toContain('[1 + 1] + 7 = 9 / 13 — PORAŻKA');
-  await canvasClick(page, 180, 400); await canvasClick(page, 690, 300);
-  await expect.poll(async () => (await gameState(page))?.dialogue?.nodeId).toBe('intro');
-  await canvasClick(page, 180, 400); await canvasClick(page, 180, 400);
-  await expect.poll(() => screenText(page)).toContain('[1 + 1] + 7 = 9 / 13 — PORAŻKA');
+  await expect.poll(() => screenText(page)).toContain('[1 + 1] + 7 = 9 / 9 — ✓ SUKCES');
+  while ((await gameState(page)).story.nodeId !== 'scene_end') await choose(page);
+  await choose(page); expect((await gameState(page)).checks).toEqual(saved.checks);
   await page.keyboard.press('Escape'); await page.getByRole('button', { name: 'Menu główne', exact: true }).click();
   await page.getByRole('button', { name: 'Anuluj', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Pauza', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Menu główne', exact: true }).click(); await page.getByRole('button', { name: 'Potwierdź', exact: true }).click();
@@ -99,11 +97,11 @@ test('settings persist, fullscreen toggles and slow dialogue pauses and can be r
   await expect(page.getByLabel('Szybkość wyświetlania dialogów')).toHaveValue('15');
   await page.getByRole('button', { name: 'Wróć', exact: true }).click();
   await page.getByRole('button', { name: 'Nowa gra', exact: true }).click(); await page.getByRole('button', { name: 'Psycholog', exact: true }).click(); await page.getByRole('button', { name: 'Rozpocznij grę', exact: true }).click();
-  await canvasClick(page, 690, 300); await expect.poll(async () => (await gameState(page))?.dialogue?.nodeId, { timeout: 10000 }).toBe('intro');
+  await expect.poll(async () => (await gameState(page))?.dialogue?.nodeId, { timeout: 10000 }).toBe('intro');
   expect((await screenText(page)).length).toBeLessThan(100);
   await page.keyboard.press('Escape'); const text = await screenText(page); await page.waitForTimeout(300); expect(await screenText(page)).toBe(text);
   await page.getByRole('button', { name: 'Wznów', exact: true }).click(); await canvasClick(page, 500, 300);
-  await expect.poll(() => screenText(page)).toContain('Czego pan szuka?');
+  await expect.poll(() => screenText(page)).toContain('Na długo pan do nas zawitał?');
 });
 test('invalid slots remain intact and cannot be loaded', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => { localStorage.setItem('choly.save.1', 'broken'); localStorage.setItem('choly.save.2', '{"version":999}'); });
@@ -119,7 +117,7 @@ test('saving preserves revealed dialogue progress and speed changes affect an op
   await page.getByLabel('Szybkość wyświetlania dialogów').selectOption('15');
   await page.getByRole('button', { name: 'Wróć', exact: true }).click();
   await page.getByRole('button', { name: 'Nowa gra', exact: true }).click(); await page.getByRole('button', { name: 'Psycholog', exact: true }).click(); await page.getByRole('button', { name: 'Rozpocznij grę', exact: true }).click();
-  await canvasClick(page, 690, 300); await expect.poll(async () => (await gameState(page))?.dialogue?.nodeId, { timeout: 10000 }).toBe('intro');
+  await expect.poll(async () => (await gameState(page))?.dialogue?.nodeId, { timeout: 10000 }).toBe('intro');
   await expect.poll(async () => (await screenText(page)).length).toBeGreaterThan(3);
   await page.keyboard.press('Escape'); const prefix = await screenText(page);
   await page.getByRole('button', { name: 'Zapisz grę', exact: true }).click(); await page.getByRole('button', { name: 'Zapisz w slocie 1', exact: true }).click();
@@ -128,6 +126,6 @@ test('saving preserves revealed dialogue progress and speed changes affect an op
   await page.reload(); await page.getByRole('button', { name: 'Kontynuuj', exact: true }).click();
   await page.keyboard.press('Escape'); expect(await screenText(page)).toMatch(new RegExp('^' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   await page.getByRole('button', { name: 'Ustawienia', exact: true }).click(); await page.getByLabel('Szybkość wyświetlania dialogów').selectOption('0');
-  await expect.poll(() => screenText(page)).toContain('Czego pan szuka?');
+  await expect.poll(() => screenText(page)).toContain('Na długo pan do nas zawitał?');
   expect((await gameState(page)).character).toEqual(save.state.character);
 });

@@ -23,7 +23,7 @@ Gracz rozdziela 12 punktów w kreatorze. Kolumna Start przedstawia opcjonalny pr
 Atrybuty 1–6 (łącznie 12), rangi umiejętności 0–5. Premia = atrybut + ranga + modyfikatory.
 
 ## Testy
-2k6 + premia >= próg. DC: 7 banalny, 10 łatwy, 13 umiarkowany, 16 trudny, 19 bardzo trudny, 22 niemal niemożliwy. Sukces wyjątkowy: wynik >= DC + 5. Brak automatycznego sukcesu/porażki. Wynik i szansa są jawne. Białe testy ponawiane wyłącznie po zmianie warunków, czerwone jednorazowe. Pasywne rzuty uruchamiają się automatycznie, ale są wyświetlane. Nie blokuj fabuły testami opcjonalnymi.
+2k6 + premia >= próg. DC: 7 banalny, 10 łatwy, 13 umiarkowany, 16 trudny, 19 bardzo trudny, 22 niemal niemożliwy. Sukces wyjątkowy: wynik >= DC + 5. Brak automatycznego sukcesu/porażki. Wynik jest jawny; przed rzutem pokazujemy nazwę umiejętności, opisową trudność i kolor na podstawie DC, bez procentów. Białe testy ponawiane wyłącznie po zmianie warunków, czerwone jednorazowe. Pasywne rzuty uruchamiają się automatycznie, ale są wyświetlane. Nie blokuj fabuły testami opcjonalnymi.
 
 ## Postęp
 XP za unikalne odkrycia, zadania i rozdziały; orientacyjnie 100 XP = 1 punkt rangi. Folklor ograniczony fabularnie.
