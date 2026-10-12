@@ -1,7 +1,7 @@
 # Scena 001 — Żuk → pierwsze spotkanie z Piotrem
 
 ## Zakres
-Ten pakiet zawiera **pełną roboczą strukturę dialogową** przyjazdu Jerzego, zgodną z kolejnością otwierającego fragmentu powieści, oraz specyfikację prezentacji testów. Wciąż wymaga zaimplementowania w Phaserze i przeglądowej korekty stylistycznej; same pliki danych nie uruchamiają sceny.
+Ten pakiet zawiera **pełną roboczą strukturę dialogową** przyjazdu Jerzego, zgodną z kolejnością otwierającego fragmentu powieści, oraz specyfikację prezentacji testów. Graf jest podłączony do gry Phaser przez `src/content/story.ts` i `src/systems/dialogue.ts`. `ArrivalScene` uruchamia podróż, a `SquareScene` eksplorację i spotkanie. Teksty pozostają roboczą adaptacją do dalszego przeglądu.
 
 - `src/content/arrival.dialogue.json` — dialog w formie grafu węzłów z konsekwencjami i flagami.
 - `src/content/difficulty.json` — opisowe poziomy trudności i kolory.
@@ -25,3 +25,12 @@ Rozpoczynamy łagodnie: Empatia DC 10, Dedukcja DC 11, Opanowanie DC 9, Perswazj
 
 ## Prawa
 Teksty są nowymi kwestiami projektowymi. Nie kopiować literalnie prozy ani dialogów źródłowych do kodu. Publiczna wierna adaptacja wymaga uprawnień od posiadacza praw.
+
+
+## Implementacja i kontrola postępu
+
+Nowa gra rozpoczyna graf w węźle intro. Węzeł explore przełącza na plac i oddaje ruch graczowi; dopiero interakcja piotr_bieniasz uruchamia piotr_intro. Następne węzły korzystają bezpośrednio z danych. onEnterFlags są ustawiane idempotentnie, journal trafia do dziennika, a tone do zapisu ostatniej odpowiedzi. successText/failureText są pokazywane wraz z jawnym wynikiem. Nie ma blokady postępu po nieudanym rzucie.
+
+scene_end wyświetla zakończenie rozdziału, bez uruchamiania nieistniejącej sceny 003. Jego fallback pozwala wrócić do swobodnego placu. Zapis v3 odtwarza scenę, węzeł, interpretację, odsłonięte znaki, wpisy dziennika i wyniki; starsze zapisy placu są mapowane na odpowiadające węzły Piotra bez zmiany dawnych wyników.
+
+Testy jednostkowe przechodzą przez wszystkie kombinacje przygotowanych odpowiedzi z porażkami i sprawdzają pełny graf, flagi oraz dziennik. Testy Chromium obejmują pełny prolog z czterema nieudanymi testami, powrót z zapisu w obu scenach, migrację starego rzutu, brak procentów, kolory i dalszą eksplorację po zakończeniu.

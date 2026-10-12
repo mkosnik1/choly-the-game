@@ -1,3 +1,4 @@
+import { squareSession, meetPiotr } from './story-fixtures';
 import { describe, it, expect } from 'vitest';
 import { createCharacter, presets, initialSkills, validAttributes, adjustAttribute, remainingPoints, type Attributes } from '../src/state/character';
 import { bonus, chance, roll } from '../src/rpg';
@@ -50,15 +51,15 @@ describe('character allocation and immutable active build', () => {
 });
 describe('three save slots, round trip and migration', () => {
   it('restores the exact build, ranks, position, flags, dialogue and performed roll', () => {
-    const storage = new Memory(), saves = new SaveStore(storage), session = new GameSession(presets.Obserwator);
+    const storage = new Memory(), saves = new SaveStore(storage), session = squareSession(presets.Obserwator);
     session.update({ position: { x: 500.25, y: 400.75 } });
-    const dialogue = new DialogueController(session); dialogue.start(); dialogue.choose(0); dialogue.choose(0, () => 0);
+    const dialogue = meetPiotr(session);
     expect(saves.write(1, session.snapshot())).toBe('saved');
     const slot = saves.read(1); expect(slot.status).toBe('valid');
     if (slot.status !== 'valid') throw new Error('Expected save');
     const restored = new GameSession(slot.save.state.character.attributes, slot.save.state);
     expect(restored.snapshot()).toEqual(session.snapshot());
-    new DialogueController(restored).start(); const replay = new DialogueController(restored); replay.choose(0); replay.choose(0, () => { throw new Error('Must not reroll'); });
+    restored.update({ story: { ...restored.state.story, nodeId: 'piotr_docs', result: '' }, dialogue: null }); const replay = new DialogueController(restored); replay.start(); replay.choose(0, () => { throw new Error('Must not reroll'); });
     expect(restored.state.checks).toEqual(session.state.checks);
   });
   it('requires confirmation even for corrupt occupied slots and preserves other slots', () => {
@@ -70,17 +71,18 @@ describe('three save slots, round trip and migration', () => {
   });
   it('new sessions leave saved games untouched and continue selects newest valid slot', () => {
     const storage = new Memory(), saves = new SaveStore(storage), state = new GameSession(presets.Analityk).snapshot();
-    storage.setItem('choly.save.1', JSON.stringify({ version: 2, savedAt: '2026-10-10T10:00:00Z', state }));
-    storage.setItem('choly.save.2', JSON.stringify({ version: 2, savedAt: '2026-10-11T10:00:00Z', state }));
+    storage.setItem('choly.save.1', JSON.stringify({ version: 3, savedAt: '2026-10-10T10:00:00Z', state }));
+    storage.setItem('choly.save.2', JSON.stringify({ version: 3, savedAt: '2026-10-11T10:00:00Z', state }));
     storage.setItem('choly.save.3', 'broken'); const before = [...storage.data]; new GameSession(presets.Obserwator);
     expect([...storage.data]).toEqual(before); expect(saves.latest()?.savedAt).toBe('2026-10-11T10:00:00Z');
   });
   it('migrates flat v1 without writing or deleting its original data', () => {
-    const storage = new Memory(), state = new GameSession(presets.Analityk).snapshot();
-    const { movement, cardOpen, dialogue, ...legacy } = state;
+    const storage = new Memory();
+    const legacy = { character: createCharacter(presets.Analityk), scene: 'Square', position: { x: 470, y: 365 }, flags: {}, checks: {} };
     const raw = JSON.stringify({ version: 1, savedAt: '2026-10-11T10:00:00Z', ...legacy });
     storage.setItem('choly.save.1', raw); const slot = new SaveStore(storage).read(1);
-    expect(slot.status).toBe('valid'); if (slot.status === 'valid') expect(slot.save.state).toEqual(state);
+    expect(slot.status).toBe('valid');
+    if (slot.status === 'valid') { expect(slot.save.state.character).toEqual(legacy.character); expect(slot.save.state.position).toEqual(legacy.position); expect(slot.save.state.story.nodeId).toBe('explore'); }
     expect(storage.getItem('choly.save.1')).toBe(raw);
   });
   it.each(['not-json', '{"version":999}', '{"version":2,"savedAt":"oops","state":{}}'])('reports corrupt/unsupported records without removing them: %s', raw => {
@@ -89,24 +91,23 @@ describe('three save slots, round trip and migration', () => {
     expect(() => decodeSave(raw)).toThrow();
   });
   it('rejects tampered rolls, invalid builds, unsupported scenes and positions inside obstacles', () => {
-    const session = new GameSession(presets.Psycholog), dialogue = new DialogueController(session);
-    dialogue.start(); dialogue.choose(0); dialogue.choose(0, () => 0);
+    const session = squareSession(); meetPiotr(session);
     for (const mutate of [
       (s: any) => s.character.attributes.Intelekt = 9,
       (s: any) => s.character.skills.Analiza = -1,
       (s: any) => s.scene = '003',
       (s: any) => s.position = { x: 100, y: 100 },
-      (s: any) => s.checks['document:0'].total = 99,
-      (s: any) => s.checks['document:0'].dice = [0, 7],
+      (s: any) => s.checks.piotr_doctor_jab.total = 99,
+      (s: any) => s.checks.piotr_doctor_jab.dice = [0, 7],
       (s: any) => s.dialogue.result = 'Fałszywy wynik',
       (s: any) => s.dialogue.revealed = -1,
       (s: any) => s.dialogue.revealed = 10000,
-      (s: any) => s.checks = { '__proto__:0': s.checks['document:0'] },
-      (s: any) => s.checks = { 'document:00': s.checks['document:0'] }
+      (s: any) => s.checks = { '__proto__:0': s.checks.piotr_doctor_jab },
+      (s: any) => s.checks = { 'document:00': s.checks.piotr_doctor_jab }
     ]) { const state = session.snapshot(); mutate(state); expect(validateState(state)).toBe(false); }
   });
   it('keeps movement routes and rejects routes through obstacles', () => {
-    const session = new GameSession(presets.Psycholog);
+    const session = squareSession();
     session.update({ movement: { path: [{ x: 500, y: 400 }], talkPending: false, flipX: false } });
     expect(validateState(session.snapshot())).toBe(true);
     session.update({ movement: { path: [{ x: 30, y: 120 }], talkPending: false, flipX: false } });

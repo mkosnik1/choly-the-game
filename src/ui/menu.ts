@@ -37,7 +37,7 @@ export class MenuController {
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     });
   }
-  bind(scene: SquareScene) { this.scene = scene; if (!this.active) this.game.events.once('poststep', () => { if (!this.active) this.game.scene.pause('Square'); }); }
+  bind(scene: SquareScene) { this.scene = scene; if (!this.active) this.game.events.once('poststep', () => { if (!this.active) this.game.scene.pause(this.scene.sys.settings.key); }); }
   private show(mode: string, title: string) {
     this.mode = mode; this.root.hidden = false;
     const panel = element('div'); panel.className = 'menu-panel';
@@ -48,8 +48,8 @@ export class MenuController {
   }
   private message(text: string) { const p = element('p', text); p.className = 'notice'; p.setAttribute('role', 'status'); this.body.append(p); }
   main() {
-    this.active = false; this.game.scene.pause('Square'); this.show('main', 'Pieśni Chołów');
-    this.body.append(element('p', 'Jerzy Drozd przybywa do Chołów. Pierwszy prototyp: plac wsi.'));
+    this.active = false; this.game.scene.pause(this.scene.sys.settings.key); this.show('main', 'Pieśni Chołów');
+    this.body.append(element('p', 'Jerzy Drozd przybywa do Chołów. Prolog: podróż Żukiem i plac wsi.'));
     if (this.saves.latest()) this.body.append(button('Kontynuuj', () => { const save = this.saves.latest(); if (save) this.load(save); }));
     this.body.append(button('Nowa gra', () => { this.attributes = { Intelekt: 1, Psychika: 1, Percepcja: 1, Instynkt: 1 }; this.creator(); }), button('Wczytaj grę', () => this.slots(false)), button('Ustawienia', () => this.settingsScreen(() => this.main())));
     const errors = this.saves.slots().filter(slot => slot.status === 'error');
@@ -74,16 +74,17 @@ export class MenuController {
     const points = element('p', `Pozostałe punkty: ${remainingPoints(this.attributes)}`); points.setAttribute('role', 'status'); this.body.append(points);
     this.body.append(button('Rozpocznij grę', () => this.start(new GameSession(this.attributes)), !validAttributes(this.attributes)), button('Wróć', () => this.main()));
   }
-  private start(session: GameSession) {
+  private start(session: GameSession, transition = false) {
     this.active = true; this.root.hidden = true;
-    this.game.scene.stop('Square');
-    this.game.scene.start('Square', { session, settings: this.settings });
+    this.game.scene.stop(this.scene.sys.settings.key);
+    this.game.scene.start(session.state.scene, { session, settings: this.settings, transition });
     void this.fullscreen(this.settings.value.fullscreen);
     (this.game.canvas as HTMLCanvasElement).focus();
   }
+  transition(session: GameSession) { this.start(session, true); }
   private load(save: Save) { this.start(new GameSession(save.state.character.attributes, save.state)); }
-  pause() { if (!this.active) return; this.game.scene.pause('Square'); this.show('pause', 'Pauza'); this.body.append(button('Wznów', () => this.resume()), button('Zapisz grę', () => this.slots(true)), button('Ustawienia', () => this.settingsScreen(() => this.pause())), button('Menu główne', () => this.confirm('Opuścić bieżącą grę?', 'Niezapisany postęp zostanie utracony. Istniejące sloty pozostaną zachowane.', () => this.main(), () => this.pause()))); }
-  private resume() { this.root.hidden = true; this.game.scene.resume('Square'); this.game.canvas.focus(); }
+  pause() { if (!this.active) return; this.game.scene.pause(this.scene.sys.settings.key); this.show('pause', 'Pauza'); this.body.append(button('Wznów', () => this.resume()), button('Zapisz grę', () => this.slots(true)), button('Ustawienia', () => this.settingsScreen(() => this.pause())), button('Menu główne', () => this.confirm('Opuścić bieżącą grę?', 'Niezapisany postęp zostanie utracony. Istniejące sloty pozostaną zachowane.', () => this.main(), () => this.pause()))); }
+  private resume() { this.root.hidden = true; this.game.scene.resume(this.scene.sys.settings.key); this.game.canvas.focus(); }
   private confirm(title: string, text: string, yes: () => void, no: () => void) {
     this.show('confirm', title); this.body.append(element('p', text), button('Potwierdź', yes), button('Anuluj', no));
   }
@@ -93,7 +94,7 @@ export class MenuController {
       const row = element('section'); row.className = 'save-slot'; row.append(element('h2', `Slot ${slot.index}`));
       if (slot.status === 'valid') {
         const build = slot.save.state.character.attributes;
-        row.append(element('p', `Plac Chołów • ${new Date(slot.save.savedAt).toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })} • ${Object.values(build).join('/')}`));
+        row.append(element('p', `${slot.save.state.scene === 'Arrival' ? 'Podróż Żukiem' : 'Plac Chołów'} • ${new Date(slot.save.savedAt).toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })} • ${Object.values(build).join('/')}`));
       } else row.append(element('p', slot.status === 'empty' ? 'Pusty slot' : slot.message));
       row.append(button(saving ? `Zapisz w slocie ${slot.index}` : `Wczytaj slot ${slot.index}`, () => {
         if (!saving) { if (slot.status === 'valid') this.load(slot.save); return; }
