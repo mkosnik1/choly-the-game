@@ -6,7 +6,7 @@ Projekt: polskie izometryczne RPG point-and-click o Jerzym Drozdzie, wiernie ada
 - Dialogi dodane do gry oznaczaj jako adaptacyjne, nigdy jako cytat z powieści.
 - Wszystkie rzuty są jawne: 2k6 + atrybut + ranga + modyfikatory >= DC. Pokazuj szansę powodzenia przed rzutem.
 - Porażka nie może zablokować postępu głównego wątku (fail forward).
-- Atrybuty startowe: Intelekt 4, Psychika 3, Percepcja 3, Instynkt 1. 12 umiejętności opisanych w docs/GDD.md.
+- Atrybuty ustala kreator: łącznie 12 punktów, każdy 1–6; profil Psycholog to 4/3/3/2. Build jest niezmienny podczas aktywnej gry. 12 umiejętności opisanych w docs/GDD.md.
 - Oddziel dane fabularne od logiki. Testy losowości mają być czystymi funkcjami testowalnymi.
 - Nie wprowadzaj backendu, rozbudowanej walki, craftingu ani generatywnych dialogów w demo.
 - Nie kopiuj cudzych assetów ani fragmentów chronionego tekstu. Używaj placeholderów z prawem do użycia.

@@ -58,3 +58,17 @@ Tekstury są rysowane w połowie rozdzielczości świata, wyświetlane zwykle dw
 Podmiana grafiki: w `preload()` sceny wczytaj lokalny plik przez `this.load.image(key, '/assets/...png')`. Generator pomija już istniejące klucze: `square-ground`, `shop`, `house`, `van`, `chestnut`, `jerzy-0..2`, `piotr-0..2`, `ochre-0..2`, `green-0..2`, `burgundy-0..2`. Zachowaj rozmiary tekstur z generatora i podstawę na dolnym środku albo dostosuj skalę/punkt zaczepienia w rendererze. Napis sklepu jest osobną warstwą, więc nowy asset powinien zostawić na niego miejsce. To samodzielnie narysowane placeholdery; brak cudzych assetów i cytatów.
 
 Dodatkowe testy sprawdzają trasy wokół Żuka i pnia kasztanowca, dostępność Piotra, podświetlenie po najechaniu, rzeczywiste zmiany klatek chodu, przerwanie podejścia oraz kartę postaci po zmianie rozmiaru widoku.
+
+## Menu, postać i zapis gry
+
+![Menu główne](docs/images/main-menu.png)
+
+![Kreator Jerzego](docs/images/character-creator.png)
+
+Gra otwiera menu główne. „Nowa gra” prowadzi do kreatora Jerzego: 12 punktów, cztery atrybuty po 1–6, przyciski +/− i profile Psycholog (4/3/3/2), Analityk (6/3/2/1), Obserwator (2/3/5/2). Rozpoczęcie jest możliwe dopiero przy rozdaniu wszystkich punktów. Rangi startowe 12 umiejętności nie zmieniły się. Aktywny build jest niezmienny, a karta, premie i szanse testów korzystają z wybranych statystyk.
+
+Escape otwiera pauzę: Wznów, Zapisz grę, Ustawienia, Menu główne. Pauza zatrzymuje ruch i odsłanianie dialogu. Powrót do menu wymaga potwierdzenia utraty niezapisanego postępu. „Kontynuuj” pojawia się tylko dla poprawnego zapisu i odtwarza najnowszy z trzech slotów. „Wczytaj grę” pozwala wybrać konkretny slot. Nowa gra nie usuwa zapisów; nadpisanie zajętego slotu, także uszkodzonego, wymaga osobnego potwierdzenia.
+
+Ustawienia przechowują osobno głośność muzyki/efektów, szybkość dialogów (natychmiast, wolno, normalnie, szybko) i preferencję pełnego ekranu. Zmiana szybkości działa też na otwarty dialog. Kliknięcie tła dialogu pokazuje cały tekst. Pełny ekran wymaga zgody przeglądarki i akcji użytkownika; preferencja jest ponawiana przy rozpoczęciu/wczytaniu gry. Plac nadal nie ma nagrań audio; dodawane później lokalne ścieżki należy uruchamiać przez `audio.play(key, 'music' | 'effects')`, aby korzystały z obu regulatorów.
+
+Stan postaci: `src/state/character.ts` i `session.ts`. Zapis/migracja: `src/state/saves.ts`. Ustawienia: `src/state/settings.ts`. Menu DOM: `src/ui/menu.ts` i CSS. Sterowanie rozmową, odsłanianie tekstu i mikser: `src/systems/`. Format i granice kompatybilności zapisów opisuje [docs/SAVES.md](docs/SAVES.md).

@@ -1,0 +1,24 @@
+#menu-root { position: fixed; inset: 0; z-index: 10; overflow: auto; box-sizing: border-box; padding: 32px 16px; background: rgba(15,25,20,.88); display: grid; place-items: center; color: #f2e7ca; font-family: Georgia, serif; }
+#menu-root[hidden] { display: none; }
+.menu-panel { width: min(850px, 100%); box-sizing: border-box; padding: 28px; background: #202f26; border: 2px solid #b6a071; box-shadow: 0 12px 70px #101a14; }
+.menu-panel > p { color: #b8bd9d; letter-spacing: .14em; font: 12px monospace; }
+.menu-panel h1 { margin: 12px 0 24px; font-size: clamp(24px, 4vw, 36px); outline: none; }
+.menu-panel h2 { font-size: 18px; margin: 0 0 6px; }
+.menu-panel p { line-height: 1.5; }
+.menu-panel button { display: block; width: 100%; min-height: 44px; border: 1px solid #8a8d68; padding: 10px 16px; margin: 10px 0; background: #344636; color: #f1ddae; font: 17px Georgia,serif; cursor: pointer; }
+.menu-panel button:hover:not(:disabled), .menu-panel button:focus-visible { background: #526343; border-color: #f4dda0; outline: 2px solid #ddcb91; }
+.menu-panel button:disabled { opacity: .4; cursor: default; }
+.menu-panel label { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 24px 0; }
+.menu-panel input[type=range] { flex: 1; min-width: 130px; accent-color: #d9c084; }
+.menu-panel input[type=checkbox] { width: 24px; height: 24px; accent-color: #d9c084; }
+.menu-panel select { background: #344636; color: #f2e7ca; padding: 12px; font: inherit; border: 1px solid #b6a071; }
+.attribute-row { display: grid; grid-template-columns: 1fr 150px; gap: 18px; border-bottom: 1px solid #58614a; padding: 16px 0; }
+.attribute-row p { margin: 4px 0; }
+.attribute-row small { color: #c0c5a6; }
+.attribute-controls { display: flex; align-items: center; gap: 12px; }
+.attribute-controls button { width: 44px; flex-shrink: 0; }
+.attribute-controls output { min-width: 20px; text-align: center; font: bold 24px monospace; }
+.presets { display: flex; gap: 10px; }
+.save-slot { border: 1px solid #727a5c; padding: 16px; margin: 14px 0; }
+.notice { border-left: 3px solid #dbc283; padding: 8px 12px; background: #374630; }
+@media (max-width: 560px) { #menu-root { padding: 12px; place-items: start center; } .menu-panel { padding: 18px; } .attribute-row { grid-template-columns: 1fr; gap: 4px; } .attribute-controls { justify-content: end; } .presets { flex-wrap: wrap; gap: 0 8px; } .presets button { width: auto; flex: 1; } }
